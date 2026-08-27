@@ -8,13 +8,13 @@
 
 | Section | Description | Link |
 | :--- | :--- | :--- |
-| 🦙 **Local LLMs & Inference** | Run AI models locally on your hardware without subscription costs | [local-llms.md](file:///Users/deepankarboro/Projects/AI_IG_Content/github-repos/local-llms.md) |
-| 🎨 **Image & Media Generation** | Open-source generative art, diffusion tools, and media downloaders | [image-generation.md](file:///Users/deepankarboro/Projects/AI_IG_Content/github-repos/image-generation.md) |
-| 🎙️ **Speech & Audio AI** | High-speed transcription, voice cloning, and text-to-speech models | [speech-and-audio.md](file:///Users/deepankarboro/Projects/AI_IG_Content/github-repos/speech-and-audio.md) |
-| ⚡ **Automation & AI Agents** | Self-hosted workflow automation, agent builders, and pipelines | [workflow-automation.md](file:///Users/deepankarboro/Projects/AI_IG_Content/github-repos/workflow-automation.md) |
-| 🛠️ **Developer & Privacy Tools** | Self-hosted alternatives for analytics, password vaults, and UI design | [developer-tools.md](file:///Users/deepankarboro/Projects/AI_IG_Content/github-repos/developer-tools.md) |
-| 💬 **Curated AI Prompts** | Copy-ready prompt templates for coding, deep research, and creation | [prompts/](file:///Users/deepankarboro/Projects/AI_IG_Content/prompts/coding-assistants.md) |
-| 🧩 **End-to-End Workflows** | Complete recipes connecting multiple open-source AI tools | [workflows/](file:///Users/deepankarboro/Projects/AI_IG_Content/workflows/local-ai-stack.md) |
+| 🦙 **Local LLMs & Inference** | Run AI models locally on your hardware without subscription costs | [local-llms.md](docs/github-repos/local-llms.md) |
+| 🎨 **Image & Media Generation** | Open-source generative art, diffusion tools, and media downloaders | [image-generation.md](docs/github-repos/image-generation.md) |
+| 🎙️ **Speech & Audio AI** | High-speed transcription, voice cloning, and text-to-speech models | [speech-and-audio.md](docs/github-repos/speech-and-audio.md) |
+| ⚡ **Automation & AI Agents** | Self-hosted workflow automation, agent builders, and pipelines | [workflow-automation.md](docs/github-repos/workflow-automation.md) |
+| 🛠️ **Developer & Privacy Tools** | Self-hosted alternatives for analytics, password vaults, and UI design | [developer-tools.md](docs/github-repos/developer-tools.md) |
+| 💬 **Curated AI Prompts** | Copy-ready prompt templates for coding, deep research, and creation | [prompts/](docs/prompts/coding-assistants.md) |
+| 🧩 **End-to-End Workflows** | Complete recipes connecting multiple open-source AI tools | [workflows/](docs/workflows/local-ai-stack.md) |
 
 ---
 
