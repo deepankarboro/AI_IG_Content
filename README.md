@@ -9,11 +9,14 @@
 | Section | Description | Link |
 | :--- | :--- | :--- |
 | 🦙 **Local LLMs & Inference** | Run AI models locally on your hardware without subscription costs | [local-llms.md](docs/github-repos/local-llms.md) |
+| 🤖 **AI Coding Agents** | Autonomous pair programmers (Aider, Continue, Browser-Use) | [ai-coding-agents.md](docs/github-repos/ai-coding-agents.md) |
 | 🎨 **Image & Media Generation** | Open-source generative art, diffusion tools, and media downloaders | [image-generation.md](docs/github-repos/image-generation.md) |
 | 🎙️ **Speech & Audio AI** | High-speed transcription, voice cloning, and text-to-speech models | [speech-and-audio.md](docs/github-repos/speech-and-audio.md) |
 | ⚡ **Automation & AI Agents** | Self-hosted workflow automation, agent builders, and pipelines | [workflow-automation.md](docs/github-repos/workflow-automation.md) |
+| 🕷️ **Web Scraping & Crawling** | LLM-friendly web crawlers (Crawl4AI, ScrapeGraphAI) | [web-scraping-and-crawling.md](docs/github-repos/web-scraping-and-crawling.md) |
+| 🗄️ **RAG & Vector Databases** | Knowledge graphs and vector stores (Qdrant, Dify, LightRAG) | [rag-and-vector-databases.md](docs/github-repos/rag-and-vector-databases.md) |
 | 🛠️ **Developer & Privacy Tools** | Self-hosted alternatives for analytics, password vaults, and UI design | [developer-tools.md](docs/github-repos/developer-tools.md) |
-| 💬 **Curated AI Prompts** | Copy-ready prompt templates for coding, deep research, and creation | [prompts/](docs/prompts/coding-assistants.md) |
+| 💬 **Curated AI Prompts** | Copy-ready prompt templates for coding, creation, and research | [prompts/](docs/prompts/coding-assistants.md) |
 | 🧩 **End-to-End Workflows** | Complete recipes connecting multiple open-source AI tools | [workflows/](docs/workflows/local-ai-stack.md) |
 
 ---
@@ -23,10 +26,12 @@
 | Tool | Category | Replaces | Official GitHub | 1-Click Terminal Command |
 | :--- | :--- | :--- | :--- | :--- |
 | **Ollama** | Local LLM | OpenAI API | [ollama/ollama](https://github.com/ollama/ollama) | `curl -fsSL https://ollama.com/install.sh \| sh` |
+| **Aider** | Coding Agent | Cursor / Copilot | [Aider-AI/aider](https://github.com/Aider-AI/aider) | `pip install aider-chat` |
+| **Crawl4AI** | AI Web Scraper | Firecrawl Cloud | [unclecode/crawl4ai](https://github.com/unclecode/crawl4ai) | `pip install crawl4ai` |
 | **Fooocus** | AI Image Gen | Midjourney | [lllyasviel/Fooocus](https://github.com/lllyasviel/Fooocus) | `git clone https://github.com/lllyasviel/Fooocus.git` |
 | **Whisper** | Audio Transcription | Otter.ai / Descript | [openai/whisper](https://github.com/openai/whisper) | `pip install -U openai-whisper` |
 | **n8n** | Automation | Zapier / Make | [n8n-io/n8n](https://github.com/n8n-io/n8n) | `npx n8n` |
-| **yt-dlp** | Media Downloader | Paid Downloaders | [yt-dlp/yt-dlp](https://github.com/yt-dlp/yt-dlp) | `pip install yt-dlp` |
+| **Qdrant** | Vector Database | Pinecone | [qdrant/qdrant](https://github.com/qdrant/qdrant) | `docker run -p 6333:6333 qdrant/qdrant` |
 | **Penpot** | UI/UX Design | Figma | [penpot/penpot](https://github.com/penpot/penpot) | Self-host with Docker Compose |
 | **Plausible** | Web Analytics | Google Analytics 4 | [plausible/analytics](https://github.com/plausible/analytics) | Self-host with Docker |
 | **Bitwarden** | Password Manager | 1Password / LastPass | [bitwarden/server](https://github.com/bitwarden/server) | Self-host with Docker |

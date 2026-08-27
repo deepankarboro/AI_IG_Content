@@ -1,0 +1,20 @@
+import{_ as s,o as a,c as n,a4 as t}from"./chunks/framework.CogcvB8Q.js";const u=JSON.parse('{"title":"🔬 Prompts for Deep Research & Synthesis","description":"","frontmatter":{},"headers":[],"relativePath":"prompts/deep-research-and-analysis.md","filePath":"prompts/deep-research-and-analysis.md"}'),p={name:"prompts/deep-research-and-analysis.md"};function i(r,e,o,l,c,h){return a(),n("div",null,[...e[0]||(e[0]=[t(`<h1 id="🔬-prompts-for-deep-research-synthesis" tabindex="-1">🔬 Prompts for Deep Research &amp; Synthesis <a class="header-anchor" href="#🔬-prompts-for-deep-research-synthesis" aria-label="Permalink to &quot;🔬 Prompts for Deep Research &amp; Synthesis&quot;">​</a></h1><p>Structured system prompts for reasoning models (Claude 3.5 Sonnet, DeepSeek-R1, GPT-4o, Gemini 2.0 Flash) to perform deep synthesis without superficial answers.</p><hr><h3 id="_1-the-first-principles-architectural-synthesizer" tabindex="-1">1. The &quot;First-Principles Architectural Synthesizer&quot; <a class="header-anchor" href="#_1-the-first-principles-architectural-synthesizer" aria-label="Permalink to &quot;1. The &quot;First-Principles Architectural Synthesizer&quot;&quot;">​</a></h3><blockquote><p>Deconstructs complex technical architectures, tradeoffs, and system designs.</p></blockquote><div class="language-text vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">text</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>You are a Principal Systems Architect and Distinguished Researcher.</span></span>
+<span class="line"><span>Analyze the following topic / codebase / architecture from first principles:</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>&lt;TOPIC_OR_CODEBASE&gt;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Provide your breakdown using the following rigorous sections:</span></span>
+<span class="line"><span>1. Core Mental Model: Explain the fundamental abstraction in 2-3 sentences.</span></span>
+<span class="line"><span>2. Latency, Cost &amp; Scaling Tradeoffs: Compare it directly against 2 major alternatives.</span></span>
+<span class="line"><span>3. Edge Case Vulnerabilities: What happens under network partition, high memory pressure, or poisoned inputs?</span></span>
+<span class="line"><span>4. Recommended Implementation Stack: Minimal production setup with code/configuration snippet.</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Do not use filler phrases or generic praise. Be precise, technical, and objective.</span></span></code></pre></div><hr><h3 id="_2-the-competitive-intelligence-tool-matrix" tabindex="-1">2. The &quot;Competitive Intelligence &amp; Tool Matrix&quot; <a class="header-anchor" href="#_2-the-competitive-intelligence-tool-matrix" aria-label="Permalink to &quot;2. The &quot;Competitive Intelligence &amp; Tool Matrix&quot;&quot;">​</a></h3><blockquote><p>Synthesizes multiple tools in a niche into an objective decision matrix.</p></blockquote><div class="language-text vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">text</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>Compare the following tools / frameworks:</span></span>
+<span class="line"><span>&lt;TOOL_LIST, e.g., Ollama vs vLLM vs llama.cpp&gt;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Create an exhaustive Markdown comparison table with:</span></span>
+<span class="line"><span>- Target Persona (Developer, Enterprise, Hobbyist)</span></span>
+<span class="line"><span>- Hardware Requirements (VRAM, CPU, RAM)</span></span>
+<span class="line"><span>- Throughput / Speed Benchmarks</span></span>
+<span class="line"><span>- Ease of Setup (1-5 scale)</span></span>
+<span class="line"><span>- 1-Sentence Ideal Use Case for Each</span></span></code></pre></div>`,10)])])}const m=s(p,[["render",i]]);export{u as __pageData,m as default};

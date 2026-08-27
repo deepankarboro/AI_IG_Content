@@ -21,23 +21,29 @@ export default defineConfig({
       {
         text: '🔥 Curated GitHub Repos',
         items: [
-          { text: '🦙 Local LLMs', link: '/github-repos/local-llms' },
+          { text: '🦙 Local LLMs & Inference', link: '/github-repos/local-llms' },
+          { text: '🤖 AI Coding Agents', link: '/github-repos/ai-coding-agents' },
           { text: '🎨 Image Generation & Media', link: '/github-repos/image-generation' },
           { text: '🎙️ Speech & Audio AI', link: '/github-repos/speech-and-audio' },
           { text: '⚡ Workflow Automation', link: '/github-repos/workflow-automation' },
+          { text: '🕷️ Web Scraping & Crawling', link: '/github-repos/web-scraping-and-crawling' },
+          { text: '🗄️ RAG & Vector DBs', link: '/github-repos/rag-and-vector-databases' },
           { text: '🛠️ Developer & Privacy Tools', link: '/github-repos/developer-tools' }
         ]
       },
       {
         text: '💬 Prompt Library',
         items: [
-          { text: '💻 Coding Assistants', link: '/prompts/coding-assistants' }
+          { text: '💻 Coding Assistants', link: '/prompts/coding-assistants' },
+          { text: '✍️ Content Creation & Growth', link: '/prompts/content-creation' },
+          { text: '🔬 Deep Research & Synthesis', link: '/prompts/deep-research-and-analysis' }
         ]
       },
       {
         text: '🧩 End-to-End Workflows',
         items: [
-          { text: '🖥️ Offline Local AI Workstation', link: '/workflows/local-ai-stack' }
+          { text: '🖥️ Offline Local AI Workstation', link: '/workflows/local-ai-stack' },
+          { text: '🕷️ AI Web Scraping Pipeline', link: '/workflows/web-scraping-ai-pipeline' }
         ]
       }
     ],
