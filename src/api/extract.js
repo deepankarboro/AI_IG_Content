@@ -44,7 +44,7 @@ export async function handleExtract(request, env) {
     if (url) {
       const cleanUrl = url.trim();
       
-      // 1. If YouTube URL: use YouTube oEmbed
+      // 1. YouTube oEmbed
       if (cleanUrl.includes("youtube.com") || cleanUrl.includes("youtu.be")) {
         try {
           const ytOembed = `https://www.youtube.com/oembed?url=${encodeURIComponent(cleanUrl)}&format=json`;
@@ -58,7 +58,7 @@ export async function handleExtract(request, env) {
         }
       }
 
-      // 2. If Instagram URL: try Instagram oEmbed first
+      // 2. Instagram oEmbed
       if (cleanUrl.includes("instagram.com")) {
         try {
           const igOembed = `https://www.instagram.com/api/v1/oembed/?url=${encodeURIComponent(cleanUrl)}`;
@@ -79,7 +79,7 @@ export async function handleExtract(request, env) {
         }
       }
 
-      // 3. Fallback: Direct HTML metadata fetch
+      // 3. Fallback: Direct HTML metadata
       if (!extractedMetadata) {
         try {
           const fetchRes = await fetch(cleanUrl, {
@@ -100,7 +100,6 @@ export async function handleExtract(request, env) {
       }
     }
 
-    // Always include the URL and user notes in the payload
     const contentToProcess = [
       url ? `Target URL: ${url}` : "",
       extractedMetadata ? `Extracted Metadata:\n${extractedMetadata}` : "",
@@ -135,47 +134,78 @@ Convert each item into our standardized copy-paste-ready Markdown card schema:
 
 Ensure the output is clean, valid Markdown without unnecessary chat commentary.`;
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // Candidate Gemini model list in priority order
+    const candidateModels = [
+      "gemini-2.0-flash",
+      "gemini-1.5-flash-latest",
+      "gemini-2.5-flash",
+      "gemini-1.5-flash",
+      "gemini-1.5-pro",
+      "gemini-pro"
+    ];
 
-    const geminiRes = await fetch(geminiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: `${systemPrompt}\n\nInput Content:\n${contentToProcess}` }
+    let lastError = "";
+    let resultMarkdown = "";
+
+    for (const modelName of candidateModels) {
+      try {
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+        const geminiRes = await fetch(geminiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: `${systemPrompt}\n\nInput Content:\n${contentToProcess}` }
+                ]
+              }
             ]
-          }
-        ]
-      })
-    });
+          })
+        });
 
-    if (geminiRes.status === 429) {
-      return new Response(JSON.stringify({
-        success: false,
-        quotaExceeded: true,
-        reason: "GLOBAL_QUOTA_EXHAUSTED",
-        message: "The free Gemini API quota for this key is currently rate-limited. Please try again in 1 minute or enter your own key."
-      }), {
-        status: 200,
-        headers: corsHeaders
-      });
+        if (geminiRes.status === 404) {
+          // Model not found for this API version/region, try next candidate
+          continue;
+        }
+
+        if (geminiRes.status === 429) {
+          return new Response(JSON.stringify({
+            success: false,
+            quotaExceeded: true,
+            reason: "GLOBAL_QUOTA_EXHAUSTED",
+            message: "The free Gemini API quota for this key is currently rate-limited. Please try again in 1 minute or enter your own key."
+          }), {
+            status: 200,
+            headers: corsHeaders
+          });
+        }
+
+        if (!geminiRes.ok) {
+          lastError = await geminiRes.text();
+          continue;
+        }
+
+        const geminiData = await geminiRes.json();
+        resultMarkdown = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        if (resultMarkdown) {
+          break; // Successfully extracted
+        }
+      } catch (err) {
+        lastError = err.message;
+      }
     }
 
-    if (!geminiRes.ok) {
-      const errorData = await geminiRes.text();
+    if (!resultMarkdown) {
       return new Response(JSON.stringify({ 
         success: false, 
-        error: `Gemini API returned status ${geminiRes.status}: ${errorData}` 
+        error: `Could not connect to Gemini models. Last error: ${lastError}` 
       }), {
         status: 200,
         headers: corsHeaders
       });
     }
-
-    const geminiData = await geminiRes.json();
-    const resultMarkdown = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "No structured tools could be extracted.";
 
     return new Response(JSON.stringify({
       success: true,
