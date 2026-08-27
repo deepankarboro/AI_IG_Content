@@ -231,7 +231,6 @@ const copied = ref(false)
 const dailyCount = ref(0)
 const deviceFingerprint = ref('')
 
-// Star verification state
 const showStarModal = ref(false)
 const githubUsername = ref('')
 const verifyingStar = ref(false)
@@ -300,7 +299,6 @@ function loadDailyQuota() {
     dailyCount.value = savedCount
   }
 
-  // Load star bonus state
   const savedStarUser = localStorage.getItem('ai_starred_username')
   const savedBan = localStorage.getItem('ai_user_banned_unstar') === 'true'
   
@@ -309,7 +307,6 @@ function loadDailyQuota() {
   } else if (savedStarUser) {
     githubUsername.value = savedStarUser
     hasStarBonus.value = true
-    // Silently verify that star is still present
     verifyPersistentStar(savedStarUser)
   }
 }
@@ -321,9 +318,11 @@ async function verifyPersistentStar(username) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, deviceFingerprint: deviceFingerprint.value, checkOnly: true })
     })
-    const data = await res.json()
+    const text = await res.text()
+    let data = {}
+    try { data = JSON.parse(text) } catch (err) { return }
+
     if (res.ok && !data.isStarred) {
-      // Star was removed after claiming bonus! Block access
       isBannedForUnstar.value = true
       hasStarBonus.value = false
       localStorage.setItem('ai_user_banned_unstar', 'true')
@@ -372,7 +371,13 @@ async function verifyGithubStar() {
       })
     })
 
-    const data = await res.json()
+    const text = await res.text()
+    let data = {}
+    try {
+      data = JSON.parse(text)
+    } catch (err) {
+      throw new Error(`Server returned unexpected response (${res.status}).`)
+    }
 
     if (data.isStarred) {
       starVerifySuccess.value = true
@@ -417,7 +422,13 @@ async function handleExtract() {
       })
     })
 
-    const data = await res.json()
+    const rawResponseText = await res.text()
+    let data = {}
+    try {
+      data = JSON.parse(rawResponseText)
+    } catch (err) {
+      throw new Error(`Server returned status ${res.status}: ${rawResponseText.substring(0, 120)}`)
+    }
 
     if (res.status === 429 || data.quotaExceeded) {
       dailyCount.value = maxDailyLimit.value
@@ -438,7 +449,7 @@ async function handleExtract() {
     }
 
   } catch (err) {
-    errorMessage.value = 'Failed to connect to extraction service: ' + err.message
+    errorMessage.value = 'Extraction error: ' + err.message
   } finally {
     loading.value = false
   }
@@ -703,7 +714,6 @@ function copyResult() {
   overflow-x: auto;
 }
 
-/* Modal styles */
 .modal-backdrop {
   position: fixed;
   top: 0;
