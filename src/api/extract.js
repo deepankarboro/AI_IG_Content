@@ -15,59 +15,102 @@ export async function handleExtract(request, env) {
     const { url, rawText, userApiKey, deviceFingerprint } = body;
 
     if (!url && !rawText) {
-      return new Response(JSON.stringify({ error: "Please provide an Instagram/YouTube URL or paste text." }), {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: "Please provide an Instagram/YouTube URL or paste text." 
+      }), {
         status: 400,
         headers: corsHeaders
       });
     }
 
     const isUsingUserKey = Boolean(userApiKey && userApiKey.trim());
-    const apiKey = isUsingUserKey ? userApiKey.trim() : env.GEMINI_API_KEY;
+    const apiKey = isUsingUserKey ? userApiKey.trim() : (env.GEMINI_API_KEY || env.gemini_api_key);
 
     if (!apiKey) {
       return new Response(JSON.stringify({
-        quotaExceeded: true,
-        reason: "NO_HOST_KEY",
-        message: "The host's Gemini API key has not been added to Cloudflare environment variables yet. Please enter your own free Gemini API key below, or configure GEMINI_API_KEY in Cloudflare."
+        success: false,
+        quotaExceeded: false,
+        noHostKey: true,
+        message: "The host's GEMINI_API_KEY is not yet detected in Cloudflare Environment Variables. Please enter your free key in the 'Custom API Key Settings' section below, or configure GEMINI_API_KEY in Cloudflare Dashboard -> Settings -> Variables."
       }), {
-        status: 429,
+        status: 200,
         headers: corsHeaders
       });
     }
 
     let extractedMetadata = "";
+
     if (url) {
-      try {
-        const fetchRes = await fetch(url, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      const cleanUrl = url.trim();
+      
+      // 1. If YouTube URL: use YouTube oEmbed
+      if (cleanUrl.includes("youtube.com") || cleanUrl.includes("youtu.be")) {
+        try {
+          const ytOembed = `https://www.youtube.com/oembed?url=${encodeURIComponent(cleanUrl)}&format=json`;
+          const ytRes = await fetch(ytOembed);
+          if (ytRes.ok) {
+            const ytData = await ytRes.json();
+            extractedMetadata += `YouTube Video Title: ${ytData.title}\nChannel: ${ytData.author_name}\n`;
           }
-        });
-        if (fetchRes.ok) {
-          const html = await fetchRes.text();
-          const ogDescMatch = html.match(/<meta\s+(?:property|name)=["'](?:og:description|description)["']\s+content=["'](.*?)["']/i);
-          const ogTitleMatch = html.match(/<meta\s+(?:property|name)=["'](?:og:title|title)["']\s+content=["'](.*?)["']/i);
-          if (ogTitleMatch) extractedMetadata += `Title: ${ogTitleMatch[1]}\n`;
-          if (ogDescMatch) extractedMetadata += `Description / Caption: ${ogDescMatch[1]}\n`;
+        } catch (e) {
+          console.warn("YouTube oEmbed fetch error:", e);
         }
-      } catch (err) {
-        console.warn("Direct fetch error:", err);
+      }
+
+      // 2. If Instagram URL: try Instagram oEmbed first
+      if (cleanUrl.includes("instagram.com")) {
+        try {
+          const igOembed = `https://www.instagram.com/api/v1/oembed/?url=${encodeURIComponent(cleanUrl)}`;
+          const igRes = await fetch(igOembed, {
+            headers: { "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" }
+          });
+          if (igRes.ok) {
+            const igData = await igRes.json();
+            if (igData.title) extractedMetadata += `Instagram Title: ${igData.title}\n`;
+            if (igData.author_name) extractedMetadata += `Author: ${igData.author_name}\n`;
+            if (igData.html) {
+              const textOnly = igData.html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+              extractedMetadata += `Post Context: ${textOnly}\n`;
+            }
+          }
+        } catch (e) {
+          console.warn("Instagram oEmbed error:", e);
+        }
+      }
+
+      // 3. Fallback: Direct HTML metadata fetch
+      if (!extractedMetadata) {
+        try {
+          const fetchRes = await fetch(cleanUrl, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+            }
+          });
+          if (fetchRes.ok) {
+            const html = await fetchRes.text();
+            const ogDescMatch = html.match(/<meta\s+(?:property|name)=["'](?:og:description|description)["']\s+content=["'](.*?)["']/i);
+            const ogTitleMatch = html.match(/<meta\s+(?:property|name)=["'](?:og:title|title)["']\s+content=["'](.*?)["']/i);
+            if (ogTitleMatch) extractedMetadata += `Title: ${ogTitleMatch[1]}\n`;
+            if (ogDescMatch) extractedMetadata += `Caption: ${ogDescMatch[1]}\n`;
+          }
+        } catch (err) {
+          console.warn("Direct fetch error:", err);
+        }
       }
     }
 
-    const contentToProcess = `${rawText || ""}\n${extractedMetadata}`.trim();
-
-    if (!contentToProcess) {
-      return new Response(JSON.stringify({
-        error: "Could not extract content from the URL. Please paste the post's text or caption directly into the notes box."
-      }), {
-        status: 400,
-        headers: corsHeaders
-      });
-    }
+    // Always include the URL and user notes in the payload
+    const contentToProcess = [
+      url ? `Target URL: ${url}` : "",
+      extractedMetadata ? `Extracted Metadata:\n${extractedMetadata}` : "",
+      rawText ? `User Provided Notes/Caption:\n${rawText}` : ""
+    ].filter(Boolean).join("\n\n");
 
     const systemPrompt = `You are an expert AI & Open-Source Content Curator. 
-Analyze the provided content (from an Instagram/YouTube post) and extract all featured GitHub repositories, AI tools, libraries, or prompt templates.
+Analyze the provided content (from an Instagram post or YouTube video) and extract all featured GitHub repositories, AI tools, libraries, or prompt templates.
+
+If only a URL or minimal title is provided, use your internal knowledge about popular AI repositories and tech stacks to identify the featured tools.
 
 Convert each item into our standardized copy-paste-ready Markdown card schema:
 
@@ -75,7 +118,7 @@ Convert each item into our standardized copy-paste-ready Markdown card schema:
 > **Tagline / 1-Sentence Purpose**
 
 - **Category:** Local LLMs | Image Gen | Audio/Speech | Automation | Dev Tools | Prompts
-- **Replaces:** [Paid tool it replaces, e.g. Midjourney / Zapier / OpenAI]
+- **Replaces:** [Paid tool it replaces, e.g. Midjourney / Zapier / OpenAI / Figma]
 - **Official Repo:** [owner/repo](https://github.com/owner/repo)
 
 #### 💻 One-Click Install / Run
@@ -90,7 +133,7 @@ Convert each item into our standardized copy-paste-ready Markdown card schema:
 
 ---
 
-Ensure the output is clean Markdown without unnecessary chat commentary.`;
+Ensure the output is clean, valid Markdown without unnecessary chat commentary.`;
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
@@ -110,19 +153,23 @@ Ensure the output is clean Markdown without unnecessary chat commentary.`;
 
     if (geminiRes.status === 429) {
       return new Response(JSON.stringify({
+        success: false,
         quotaExceeded: true,
         reason: "GLOBAL_QUOTA_EXHAUSTED",
-        message: "The host's daily free Gemini limit has been reached for today."
+        message: "The free Gemini API quota for this key is currently rate-limited. Please try again in 1 minute or enter your own key."
       }), {
-        status: 429,
+        status: 200,
         headers: corsHeaders
       });
     }
 
     if (!geminiRes.ok) {
       const errorData = await geminiRes.text();
-      return new Response(JSON.stringify({ error: `Gemini API error: ${errorData}` }), {
-        status: geminiRes.status,
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: `Gemini API returned status ${geminiRes.status}: ${errorData}` 
+      }), {
+        status: 200,
         headers: corsHeaders
       });
     }
@@ -140,8 +187,11 @@ Ensure the output is clean Markdown without unnecessary chat commentary.`;
     });
 
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message || "Internal Server Error" }), {
-      status: 500,
+    return new Response(JSON.stringify({ 
+      success: false, 
+      error: error.message || "Internal Server Error" 
+    }), {
+      status: 200,
       headers: corsHeaders
     });
   }

@@ -90,6 +90,9 @@
             class="custom-input key-input"
             @input="saveApiKey"
           />
+          <div class="debug-bar">
+            <button class="reset-quota-btn" @click="resetLocalQuota">🔄 Reset Today's Quota Count (Dev Test)</button>
+          </div>
         </div>
       </details>
 
@@ -311,6 +314,15 @@ function loadDailyQuota() {
   }
 }
 
+function resetLocalQuota() {
+  if (typeof window === 'undefined') return
+  localStorage.setItem('ai_extract_count', '0')
+  localStorage.removeItem('ai_user_banned_unstar')
+  dailyCount.value = 0
+  isBannedForUnstar.value = false
+  errorMessage.value = ''
+}
+
 async function verifyPersistentStar(username) {
   try {
     const res = await fetch('/api/verify-star', {
@@ -430,20 +442,18 @@ async function handleExtract() {
       throw new Error(`Server returned status ${res.status}: ${rawResponseText.substring(0, 120)}`)
     }
 
-    if (res.status === 429 || data.quotaExceeded) {
-      dailyCount.value = maxDailyLimit.value
-      localStorage.setItem('ai_extract_count', maxDailyLimit.value.toString())
-      errorMessage.value = data.message || 'Daily free extraction limit reached.'
-      return
-    }
-
-    if (!res.ok || data.error) {
-      errorMessage.value = data.error || 'Failed to extract content.'
+    if (!data.success) {
+      if (data.quotaExceeded) {
+        dailyCount.value = maxDailyLimit.value
+        localStorage.setItem('ai_extract_count', maxDailyLimit.value.toString())
+      }
+      errorMessage.value = data.message || data.error || 'Failed to extract content.'
       return
     }
 
     resultMarkdown.value = data.markdown
 
+    // ONLY increment count when extraction was a genuine success!
     if (!userApiKey.value.trim()) {
       incrementDailyQuota()
     }
@@ -631,6 +641,27 @@ function copyResult() {
   font-size: 0.85rem;
   color: var(--vp-c-text-2);
   margin-bottom: 0.5rem;
+}
+
+.debug-bar {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.reset-quota-btn {
+  background: transparent;
+  border: 1px dashed var(--vp-c-border);
+  color: var(--vp-c-text-2);
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.reset-quota-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 
 .extract-btn {
