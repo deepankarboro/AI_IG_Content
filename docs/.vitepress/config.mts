@@ -6,11 +6,18 @@ export default defineConfig({
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
+      { text: '⚡ Extractor Tool', link: '/extractor' },
       { text: 'GitHub Repos', link: '/github-repos/local-llms' },
       { text: 'Prompts', link: '/prompts/coding-assistants' },
       { text: 'Workflows', link: '/workflows/local-ai-stack' }
     ],
     sidebar: [
+      {
+        text: '🛠️ Online Tools',
+        items: [
+          { text: '⚡ Social Media Extractor', link: '/extractor' }
+        ]
+      },
       {
         text: '🔥 Curated GitHub Repos',
         items: [
@@ -41,7 +48,7 @@ export default defineConfig({
       { icon: 'github', link: 'https://github.com/deepankarboro/AI_IG_Content' }
     ],
     footer: {
-      message: 'Curated for fast copy-pasting from social media to production.',
+      message: 'Curated for fast copy-pasting from social media to production. Star us on GitHub!',
       copyright: 'MIT Licensed | Open Source AI Hub'
     }
   }

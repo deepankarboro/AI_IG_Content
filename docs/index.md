@@ -7,13 +7,20 @@ hero:
   tagline: "High-value AI tools, open-source repositories, prompts, and workflows trapped in Instagram & YouTube — converted into 100% copy-pasteable cards."
   actions:
     - theme: brand
+      text: ⚡ Try Social Extractor
+      link: /extractor
+    - theme: alt
       text: 🚀 Explore GitHub Repos
       link: /github-repos/local-llms
     - theme: alt
-      text: 💬 View Prompts
-      link: /prompts/coding-assistants
+      text: ⭐ Star on GitHub
+      link: https://github.com/deepankarboro/AI_IG_Content
 
 features:
+  - icon: ⚡
+    title: Social Media Extractor
+    details: Paste any Instagram post or YouTube video link to extract tools and prompts into Markdown.
+    link: /extractor
   - icon: 🦙
     title: Local LLMs & Inference
     details: Run models like Llama 3, DeepSeek, and Mistral on your own hardware without subscriptions.
@@ -34,9 +41,6 @@ features:
     title: Free Developer Alternatives
     details: Self-hosted replacements for Figma (Penpot), GA4 (Plausible), and 1Password (Bitwarden).
     link: /github-repos/developer-tools
-  - icon: 📋
-    title: 1-Click Copy Ready
-    details: Pre-formatted CLI commands, pip installs, docker runs, and prompt templates.
 ---
 
 <br/>
