@@ -4,13 +4,17 @@
       <div class="header-section">
         <h2>⚡ Social Media AI Extractor</h2>
         <p class="subtitle">
-          Paste an Instagram post or YouTube video URL. We'll extract the hidden GitHub repos, tools, and prompts into copy-pasteable Markdown cards.
+          Extract hidden GitHub repos, tools, and prompts from Instagram carousels & YouTube videos into copy-pasteable Markdown cards.
         </p>
       </div>
 
-      <!-- Star Banner -->
-      <div class="star-callout">
-        <span>⭐ Finding this hub helpful? Support our open-source ranking:</span>
+      <!-- Top Quota & Star Banner -->
+      <div class="top-status-bar">
+        <div class="quota-pill" :class="{ 'quota-exhausted': isHostQuotaExhausted }">
+          <span v-if="userApiKey.trim()">⚡ Unlimited Extractions (Using Your API Key)</span>
+          <span v-else>🎟️ Daily Quota: <b>{{ remainingQuota }} / 3</b> extractions remaining today</span>
+        </div>
+
         <a href="https://github.com/deepankarboro/AI_IG_Content" target="_blank" rel="noopener noreferrer" class="star-link-btn">
           ⭐ Star on GitHub
         </a>
@@ -34,54 +38,55 @@
           id="text-input"
           v-model="rawText" 
           rows="3" 
-          placeholder="If the post is a private carousel or photo, paste any captions, comments, or OCR text here..."
+          placeholder="If the post is a private carousel or image post, paste any caption text or OCR notes here..."
           class="custom-textarea"
           :disabled="loading"
         ></textarea>
       </div>
 
       <!-- BYOK Collapsible -->
-      <details class="byok-details">
-        <summary>⚙️ Custom API Key Settings (Optional)</summary>
+      <details class="byok-details" :open="isHostQuotaExhausted">
+        <summary>⚙️ Custom API Key Settings (Unlimited Extractions)</summary>
         <div class="byok-body">
           <p class="byok-hint">
-            By default, we use the host's free Gemini quota. If you'd like to use your own free key (from <a href="https://aistudio.google.com/" target="_blank">Google AI Studio</a>), enter it here. It is saved only in your browser.
+            Get a 100% free API key from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>. Keys entered here are stored <b>only in your browser</b> and bypass the 3/day device limit.
           </p>
           <input 
             v-model="userApiKey" 
             type="password" 
-            placeholder="AIzaSy..." 
+            placeholder="Paste your Gemini Key (AIzaSy...)" 
             class="custom-input key-input"
-            @change="saveApiKey"
+            @input="saveApiKey"
           />
         </div>
       </details>
 
       <button 
         class="extract-btn" 
-        :disabled="loading || (!url && !rawText)" 
+        :disabled="loading || (!url && !rawText) || (isHostQuotaExhausted && !userApiKey.trim())" 
         @click="handleExtract"
       >
-        <span v-if="loading">⏳ Extracting & Formatting...</span>
+        <span v-if="loading">⏳ Extracting & Formatting with AI...</span>
+        <span v-else-if="isHostQuotaExhausted && !userApiKey.trim()">🛑 Daily 3/3 Limit Reached (See Below)</span>
         <span v-else>🚀 Extract Copy-Ready Cards</span>
       </button>
 
       <!-- Quota Exceeded Modal / Alert -->
-      <div v-if="quotaExceeded" class="quota-banner">
-        <h3>⚠️ Host's Daily Free Limit Reached</h3>
+      <div v-if="isHostQuotaExhausted && !userApiKey.trim()" class="quota-banner">
+        <h3>🛑 Daily Limit Reached (3 / 3 Used)</h3>
         <p>
-          The host's daily free Gemini quota has reached its limit for today. You can still use this tool in two easy ways:
+          You've used all <b>3 free extractions</b> for today on this device. You can keep extracting immediately using one of these options:
         </p>
 
         <div class="quota-options">
           <div class="quota-option-card">
-            <h4>1️⃣ Enter Your Free Gemini Key</h4>
-            <p>Get a 100% free API key from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a> and paste it above in <b>Custom API Key Settings</b>.</p>
+            <h4>1️⃣ Enter Your Free Gemini Key (Instant)</h4>
+            <p>Get your free key in 30 seconds from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a> and paste it above to unlock <b>unlimited extractions</b>.</p>
           </div>
 
           <div class="quota-option-card">
             <h4>2️⃣ Clone & Run Locally (Zero Cost)</h4>
-            <p>Clone the repository and run the extractor locally using Python with your own LLM or Ollama:</p>
+            <p>Run the extractor locally with Python and your own LLM or Ollama:</p>
             <div class="code-box">
               <code>git clone https://github.com/deepankarboro/AI_IG_Content.git</code>
             </div>
@@ -89,7 +94,7 @@
         </div>
 
         <div class="star-prompt">
-          <p>🌟 If you enjoy this open-source tool, please leave a star on GitHub—it helps us keep the free tier running!</p>
+          <p>🌟 <b>Enjoying this tool?</b> Please leave a star on GitHub — every star boosts our ranking and helps us keep this free for everyone!</p>
           <a href="https://github.com/deepankarboro/AI_IG_Content" target="_blank" rel="noopener noreferrer" class="star-link-btn large">
             ⭐ Star deepankarboro/AI_IG_Content
           </a>
@@ -97,7 +102,7 @@
       </div>
 
       <!-- Error Message -->
-      <div v-if="errorMessage && !quotaExceeded" class="error-banner">
+      <div v-if="errorMessage" class="error-banner">
         ❌ {{ errorMessage }}
       </div>
 
@@ -106,7 +111,7 @@
         <div class="result-header">
           <h3>📋 Extracted Markdown Result</h3>
           <button class="copy-btn" @click="copyResult">
-            {{ copied ? '✅ Copied!' : '📋 Copy All Markdown' }}
+            {{ copied ? '✅ Copied to Clipboard!' : '📋 Copy All Markdown' }}
           </button>
         </div>
         <pre class="markdown-preview"><code>{{ resultMarkdown }}</code></pre>
@@ -117,20 +122,89 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 
 const url = ref('')
 const rawText = ref('')
 const userApiKey = ref('')
 const loading = ref(false)
 const errorMessage = ref('')
-const quotaExceeded = ref(false)
 const resultMarkdown = ref('')
 const copied = ref(false)
+const dailyCount = ref(0)
+const deviceFingerprint = ref('')
+
+const MAX_DAILY_FREE = 3
+
+const remainingQuota = computed(() => {
+  return Math.max(0, MAX_DAILY_FREE - dailyCount.value)
+})
+
+const isHostQuotaExhausted = computed(() => {
+  return !userApiKey.value.trim() && remainingQuota.value <= 0
+})
+
+function getTodayString() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function generateDeviceFingerprint() {
+  if (typeof window === 'undefined') return 'server'
+  try {
+    const nav = window.navigator
+    const screen = window.screen
+    const raw = [
+      nav.userAgent,
+      nav.language,
+      screen.colorDepth,
+      screen.width + 'x' + screen.height,
+      new Date().getTimezoneOffset(),
+      nav.hardwareConcurrency || 'unk',
+      nav.deviceMemory || 'unk'
+    ].join('###')
+
+    // Simple robust hash
+    let hash = 0
+    for (let i = 0; i < raw.length; i++) {
+      hash = ((hash << 5) - hash) + raw.charCodeAt(i)
+      hash |= 0
+    }
+    return 'dev_' + Math.abs(hash).toString(36)
+  } catch (e) {
+    return 'dev_fallback_' + Math.random().toString(36).substring(2, 9)
+  }
+}
+
+function loadDailyQuota() {
+  if (typeof window === 'undefined') return
+  const today = getTodayString()
+  const savedDate = localStorage.getItem('ai_extract_date')
+  const savedCount = parseInt(localStorage.getItem('ai_extract_count') || '0', 10)
+
+  if (savedDate !== today) {
+    localStorage.setItem('ai_extract_date', today)
+    localStorage.setItem('ai_extract_count', '0')
+    dailyCount.value = 0
+  } else {
+    dailyCount.value = savedCount
+  }
+}
+
+function incrementDailyQuota() {
+  if (typeof window === 'undefined') return
+  const today = getTodayString()
+  const current = parseInt(localStorage.getItem('ai_extract_count') || '0', 10) + 1
+  localStorage.setItem('ai_extract_date', today)
+  localStorage.setItem('ai_extract_count', current.toString())
+  dailyCount.value = current
+}
 
 onMounted(() => {
   if (typeof window !== 'undefined') {
     userApiKey.value = localStorage.getItem('user_gemini_api_key') || ''
+    deviceFingerprint.value = generateDeviceFingerprint()
+    loadDailyQuota()
   }
 })
 
@@ -141,9 +215,12 @@ function saveApiKey() {
 }
 
 async function handleExtract() {
+  if (isHostQuotaExhausted.value && !userApiKey.value.trim()) {
+    return
+  }
+
   loading.value = true
   errorMessage.value = ''
-  quotaExceeded.value = false
   resultMarkdown.value = ''
 
   try {
@@ -153,14 +230,17 @@ async function handleExtract() {
       body: JSON.stringify({
         url: url.value.trim(),
         rawText: rawText.value.trim(),
-        userApiKey: userApiKey.value.trim() || undefined
+        userApiKey: userApiKey.value.trim() || undefined,
+        deviceFingerprint: deviceFingerprint.value
       })
     })
 
     const data = await res.json()
 
     if (res.status === 429 || data.quotaExceeded) {
-      quotaExceeded.value = true
+      dailyCount.value = MAX_DAILY_FREE
+      localStorage.setItem('ai_extract_count', MAX_DAILY_FREE.toString())
+      errorMessage.value = data.message || 'Daily free extraction limit reached.'
       return
     }
 
@@ -170,8 +250,14 @@ async function handleExtract() {
     }
 
     resultMarkdown.value = data.markdown
+
+    // Only increment host free count if user didn't use their own key
+    if (!userApiKey.value.trim()) {
+      incrementDailyQuota()
+    }
+
   } catch (err) {
-    errorMessage.value = 'Failed to connect to the extraction service: ' + err.message
+    errorMessage.value = 'Failed to connect to extraction service: ' + err.message
   } finally {
     loading.value = false
   }
@@ -189,7 +275,7 @@ function copyResult() {
 
 <style scoped>
 .extractor-container {
-  margin: 2rem 0;
+  margin: 1.5rem 0;
 }
 
 .extractor-card {
@@ -209,27 +295,39 @@ function copyResult() {
   margin-bottom: 1.25rem;
 }
 
-.star-callout {
+.top-status-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(234, 179, 8, 0.1);
-  border: 1px solid rgba(234, 179, 8, 0.3);
+  background: var(--vp-c-bg-mute);
+  border: 1px solid var(--vp-c-border);
   padding: 0.75rem 1rem;
   border-radius: 8px;
   margin-bottom: 1.5rem;
   font-size: 0.9rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.quota-pill {
   font-weight: 500;
+  color: var(--vp-c-text-1);
+}
+
+.quota-pill.quota-exhausted {
+  color: #ef4444;
 }
 
 .star-link-btn {
   background: #eab308;
   color: #000 !important;
-  padding: 0.4rem 0.8rem;
+  padding: 0.4rem 0.85rem;
   border-radius: 6px;
   font-weight: 600;
   text-decoration: none !important;
   transition: opacity 0.2s;
+  display: inline-flex;
+  align-items: center;
 }
 
 .star-link-btn:hover {
@@ -267,7 +365,6 @@ function copyResult() {
   background: var(--vp-c-bg-mute);
   padding: 0.75rem 1rem;
   border-radius: 8px;
-  cursor: pointer;
 }
 
 .byok-body {

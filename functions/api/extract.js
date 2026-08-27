@@ -3,7 +3,7 @@ export async function onRequestPost(context) {
 
   try {
     const body = await request.json();
-    const { url, rawText, userApiKey } = body;
+    const { url, rawText, userApiKey, deviceFingerprint } = body;
 
     if (!url && !rawText) {
       return new Response(JSON.stringify({ error: "Please provide an Instagram/YouTube URL or paste text." }), {
@@ -12,18 +12,26 @@ export async function onRequestPost(context) {
       });
     }
 
-    const apiKey = userApiKey || env.GEMINI_API_KEY;
-    const isUsingHostKey = !userApiKey;
+    const isUsingUserKey = Boolean(userApiKey && userApiKey.trim());
+    const apiKey = isUsingUserKey ? userApiKey.trim() : env.GEMINI_API_KEY;
 
     if (!apiKey) {
       return new Response(JSON.stringify({
         quotaExceeded: true,
-        message: "The host's daily free Gemini quota has not been set or is currently unavailable."
+        reason: "NO_HOST_KEY",
+        message: "The host's free Gemini API key has not been configured in Cloudflare environment variables yet."
       }), {
         status: 429,
         headers: { "Content-Type": "application/json" }
       });
     }
+
+    // Client public IP from Cloudflare header
+    const clientIp = request.headers.get("cf-connecting-ip") || "unknown-ip";
+    const userAgent = request.headers.get("user-agent") || "";
+    
+    // Create compound device ID
+    const deviceId = deviceFingerprint ? `${deviceFingerprint}_${clientIp}` : `${clientIp}_${userAgent}`;
 
     let extractedMetadata = "";
     if (url) {
@@ -35,7 +43,6 @@ export async function onRequestPost(context) {
         });
         if (fetchRes.ok) {
           const html = await fetchRes.text();
-          // Extract OpenGraph title and description
           const ogDescMatch = html.match(/<meta\s+(?:property|name)=["'](?:og:description|description)["']\s+content=["'](.*?)["']/i);
           const ogTitleMatch = html.match(/<meta\s+(?:property|name)=["'](?:og:title|title)["']\s+content=["'](.*?)["']/i);
           if (ogTitleMatch) extractedMetadata += `Title: ${ogTitleMatch[1]}\n`;
@@ -102,7 +109,7 @@ Ensure the output is clean Markdown without unnecessary chat commentary.`;
     if (geminiRes.status === 429) {
       return new Response(JSON.stringify({
         quotaExceeded: true,
-        isUsingHostKey,
+        reason: "GLOBAL_QUOTA_EXHAUSTED",
         message: "The host's daily free Gemini limit has been reached for today."
       }), {
         status: 429,
@@ -123,7 +130,8 @@ Ensure the output is clean Markdown without unnecessary chat commentary.`;
 
     return new Response(JSON.stringify({
       success: true,
-      markdown: resultMarkdown
+      markdown: resultMarkdown,
+      isUsingUserKey
     }), {
       status: 200,
       headers: { "Content-Type": "application/json" }
